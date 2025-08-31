@@ -1,0 +1,193 @@
+{
+  "name": "Nia Bot - Render Integration",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "1bf7f403-5b56-4b51-81a2-ee92402f595e",
+      "name": "When clicking 'Execute workflow'"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "smit3297@gmail.com",
+          "mode": "list",
+          "cachedResultName": "smit3297@gmail.com"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        176,
+        0
+      ],
+      "id": "a10da1f0-1d2c-4aaf-814b-9946765df7e1",
+      "name": "Get many events",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "oJBwa3MaEBqsVjcr",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "calendar": {
+          "__rl": true,
+          "value": "smit3297@gmail.com",
+          "mode": "list",
+          "cachedResultName": "smit3297@gmail.com"
+        },
+        "eventId": "={{ $json[\"id\"] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        624,
+        0
+      ],
+      "id": "a67aacb4-612a-486e-b026-70f98bc48a37",
+      "name": "Get an event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "oJBwa3MaEBqsVjcr",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3be46750-1e4e-4fb9-aba6-6b189578f3fb",
+              "name": "hangoutLink",
+              "value": "={{ $json.hangoutLink }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        800,
+        0
+      ],
+      "id": "384ddd91-17ed-4694-a571-a3571616fba4",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5000/n8n/webhook",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"meeting_link\": \"={{ $json.hangoutLink }}\",\n  \"auto_join\": true,\n  \"enhanced\": true,\n  \"event_title\": \"={{ $('Get an event').item.json.summary }}\",\n  \"event_start\": \"={{ $('Get an event').item.json.start.dateTime }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1008,
+        0
+      ],
+      "id": "7b3254c1-a6f1-41f5-998c-7b7d1c6eaa94",
+      "name": "Send to Local Bot"
+    },
+    {
+      "parameters": {
+        "jsCode": "const startOfDay = new Date();\nstartOfDay.setHours(0, 0, 0, 0);\n\nconst endOfDay = new Date();\nendOfDay.setHours(23, 59, 59, 999);\n\nreturn items.filter(item => {\n  const start = new Date(item.json.start?.dateTime || item.json.start?.date);\n  return start >= startOfDay && start <= endOfDay && item.json.hangoutLink;\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        384,
+        0
+      ],
+      "id": "313e2509-0da6-47c5-bfb2-547d30c01256",
+      "name": "Filter Today's Meetings"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "node": "Get many events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many events": {
+      "main": [
+        [
+          {
+            "node": "Filter Today's Meetings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get an event": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send to Local Bot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Today's Meetings": {
+      "main": [
+        [
+          {
+            "node": "Get an event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "458e5f87-89f2-4f0f-9cdf-ed7f875705bf",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3907c3aefd3cf9a9e1b8b5be2f64fb902fb7a478183a1fdad57765a5b67e89cc"
+  },
+  "id": "2m1ocV53Tirgs3eI",
+  "tags": []
+}
